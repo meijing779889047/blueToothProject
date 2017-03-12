@@ -31,13 +31,15 @@
         android:text="点击连接蓝牙设备"/>
 
       <TextView
+          android:id="@+id/tv_data"
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:padding="10dp"
           android:text="数据："/>
-       <android.support.v7.widget.RecyclerView
+       <ExpandableListView
            android:id="@+id/recyclerview_data"
            android:layout_width="match_parent"
            android:layout_height="match_parent">
-       </android.support.v7.widget.RecyclerView>
+       </ExpandableListView>
+
 </LinearLayout>

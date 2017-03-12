@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
@@ -17,6 +18,7 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,7 +49,7 @@ public class BlueToothService extends Service {
             .fromString(GattAttributes.HEART_RATE_MEASUREMENT);
 
     private  final Binder   mBinder=new LocalBinder();
-    private  class   LocalBinder  extends   Binder{
+    class   LocalBinder  extends   Binder{
           BlueToothService getService(){
              return  BlueToothService.this;
         }
@@ -118,7 +120,7 @@ public class BlueToothService extends Service {
               Log.e(TAG,"没有获取到对应的蓝牙设备，无法进行连接");
               return   false;
           }
-        mBluetoothGatt=device.connectGatt(this,false,mBluetoothGattCallback);//进行蓝牙连接，并监听回掉
+        mBluetoothGatt=device.connectGatt(this,false,mGattCallback);//进行蓝牙连接，并监听回掉
         Log.i(TAG,"进行蓝牙连接");
         mBlueToothAddress=address;
         mConnectionState=STATE_CONNECTING;
@@ -136,7 +138,19 @@ public class BlueToothService extends Service {
         mBluetoothGatt.disconnect();
         Log.i(TAG,"断开蓝牙设备");
     }
+    /**
+     * Retrieves a list of supported GATT services on the connected device. This
+     * should be invoked only after {@code BluetoothGatt#discoverServices()}
+     * completes successfully.
+     *
+     * @return A {@code List} of supported services.
+     */
+    public List<BluetoothGattService> getSupportedGattServices() {
+        if (mBluetoothGatt == null)
+            return null;
 
+        return mBluetoothGatt.getServices();
+    }
     /**
      * 关闭蓝牙设备
      */
@@ -150,104 +164,145 @@ public class BlueToothService extends Service {
     }
 
     /**
-     * 连接蓝牙设备的回调监听
+     * 想ble写入characteristic
+     * @param characteristic
      */
-    public   final BluetoothGattCallback mBluetoothGattCallback=new BluetoothGattCallback() {
+    public void wirteCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        mBluetoothGatt.writeCharacteristic(characteristic);
+
+    }
+    /**
+     * Request a read on a given {@code BluetoothGattCharacteristic}. The read
+     * result is reported asynchronously through the
+     * {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
+     * callback.
+     *
+     * @param characteristic
+     *            The characteristic to read from.
+     */
+    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.readCharacteristic(characteristic);
+    }
+
+    /**
+     * 启用或禁用通知给特征
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic
+     *            Characteristic to act on.
+     * @param enabled
+     *            If true, enable notification. False otherwise.
+     */
+    public void setCharacteristicNotification(
+            BluetoothGattCharacteristic characteristic, boolean enabled) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID
+                .fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+        if (descriptor != null) {
+            System.out.println("write descriptor");
+            descriptor
+                    .setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            mBluetoothGatt.writeDescriptor(descriptor);
+        }
+		/*
+		 * // This is specific to Heart Rate Measurement. if
+		 * (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
+		 * System
+		 * .out.println("characteristic.getUuid() == "+characteristic.getUuid
+		 * ()+", "); BluetoothGattDescriptor descriptor =
+		 * characteristic.getDescriptor
+		 * (UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+		 * descriptor
+		 * .setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+		 * mBluetoothGatt.writeDescriptor(descriptor); }
+		 */
+    }
 
 
-        /**
-         * 连接gattService状态回掉
-         * @param gatt
-         * @param status
-         */
+    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status,
+                                            int newState) {
+            String intentAction;
+            System.out.println("=======status:" + status);
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                intentAction = ACTION_GATT_CONNECTED;
+                mConnectionState = STATE_CONNECTED;
+                sendBroadCast(intentAction);
+                Log.i(TAG, "Connected to GATT server.");
+                // Attempts to discover services after successful connection.
+                Log.i(TAG, "Attempting to start service discovery:"
+                        + mBluetoothGatt.discoverServices());
+
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                intentAction = ACTION_GATT_DISCONNECTED;
+                mConnectionState = STATE_DISCONNECTED;
+                Log.i(TAG, "Disconnected from GATT server.");
+                sendBroadCast(intentAction);
+            }
+        }
+
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            super.onServicesDiscovered(gatt, status);
-            if(status==BluetoothGatt.GATT_SUCCESS){
+            if (status == BluetoothGatt.GATT_SUCCESS) {
                 sendBroadCast(ACTION_GATT_SERVICES_DISCOVERED);
-            }
-            Log.w(TAG, "onServicesDiscovered received: " + status);
-        }
-
-        /**
-         * 连接状态改变回掉
-         * @param gatt
-         * @param status
-         * @param newState
-         */
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            super.onConnectionStateChange(gatt, status, newState);
-            Log.i(TAG,"status:"+newState);
-            if(newState==BluetoothProfile.STATE_CONNECTED){//连接成功
-                mConnectionState=STATE_CONNECTED;
-                sendBroadCast(ACTION_GATT_CONNECTED);
-            }else if(newState==BluetoothProfile.STATE_DISCONNECTED){//连接断开
-                mConnectionState=STATE_DISCONNECTED;
-                sendBroadCast(ACTION_GATT_DISCONNECTED);
-
-            }
-        }
-
-        /**
-         * 读取到设备发送过来的数据回掉
-         * @param gatt
-         * @param characteristic
-         * @param status
-         */
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicRead(gatt, characteristic, status);
-            Log.i(TAG,"onCharacteristicRead（） status:"+status);
-            if(status==BluetoothGatt.GATT_SUCCESS){
-                sendBroadCast(ACTION_DATA_AVAILABLE,characteristic);
+            } else {
+                Log.w(TAG, "onServicesDiscovered received: " + status);
             }
         }
 
         @Override
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
-            System.out.println("--------write success----- status:" + status);
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic, int status) {
+            System.out.println("onCharacteristicRead");
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                sendBroadCast(ACTION_DATA_AVAILABLE, characteristic);
+            }
         }
 
         @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicChanged(gatt, characteristic);
+        public void onDescriptorWrite(BluetoothGatt gatt,
+                                      BluetoothGattDescriptor descriptor, int status) {
+
+            System.out.println("onDescriptorWriteonDescriptorWrite = " + status
+                    + ", descriptor =" + descriptor.getUuid().toString());
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic) {
             sendBroadCast(ACTION_DATA_AVAILABLE, characteristic);
             if (characteristic.getValue() != null) {
 
                 System.out.println(characteristic.getStringValue(0));
             }
-           Log.i(TAG,"--------onCharacteristicChanged-----");
+            System.out.println("--------onCharacteristicChanged-----");
         }
-
-
-
-        @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            super.onDescriptorWrite(gatt, descriptor, status);
-            System.out.println("onDescriptorWriteonDescriptorWrite = " + status
-                    + ", descriptor =" + descriptor.getUuid().toString());
-        }
-
-
 
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-            super.onReadRemoteRssi(gatt, rssi, status);
-            Log.i(TAG,"rssi = " + rssi);
+            System.out.println("rssi = " + rssi);
         }
 
-        @Override
-        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-            super.onMtuChanged(gatt, mtu, status);
-        }
+        public void onCharacteristicWrite(BluetoothGatt gatt,
+                                          BluetoothGattCharacteristic characteristic, int status) {
+            System.out.println("--------write success----- status:" + status);
+
+        };
     };
-
-
-
-
-
 
     /****发送广播*****************************************************************/
 
