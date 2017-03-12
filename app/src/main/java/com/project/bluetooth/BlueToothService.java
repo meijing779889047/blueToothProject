@@ -173,6 +173,7 @@ public class BlueToothService extends Service {
             return;
         }
 
+
         mBluetoothGatt.writeCharacteristic(characteristic);
 
     }
