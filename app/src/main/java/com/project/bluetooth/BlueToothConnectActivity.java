@@ -1,6 +1,7 @@
 package com.project.bluetooth;
 
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -181,6 +183,13 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
 
         //循环遍历所有的服务
         for (int i = 0; i <services.size() ; i++) {
+
+            //-----Service的字段信息-----//
+            int type = services.get(i).getType();
+            Log.e(TAG,"-->service type:"+Utils.getServiceType(type));
+            Log.e(TAG,"-->includedServices size:"+services.get(i).getIncludedServices().size());
+            Log.e(TAG,"-->service uuid:"+services.get(i).getUuid());
+
             Map<String,String> map=new HashMap<>();
              uuid=services.get(i).getUuid().toString();
              map.put(LIST_NAME,GattAttributes.lookup(uuid,unKnownCharacteristic));
@@ -193,8 +202,54 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
             //存储uuid_name uuid
             List<Map<String,String>>  gattCharacteristicGroupData=new ArrayList<>();
 
-            List<BluetoothGattCharacteristic> gattCharacteristics = services.get(i).getCharacteristics();
-            for (int j = 0; j <gattCharacteristics.size() ; j++) {
+            final List<BluetoothGattCharacteristic> gattCharacteristics = services.get(i).getCharacteristics();
+            for (  int j = 0; j <gattCharacteristics.size() ; j++) {
+
+                Log.e(TAG,"---->char uuid:"+gattCharacteristics.get(j).getUuid());
+
+                int permission = gattCharacteristics.get(j).getPermissions();
+                Log.e(TAG,"---->char permission:"+Utils.getCharPermission(permission));
+
+                int property = gattCharacteristics.get(j).getProperties();
+                Log.e(TAG,"---->char property:"+Utils.getCharPropertie(property));
+
+                byte[] data = gattCharacteristics.get(j).getValue();
+                if (data != null && data.length > 0) {
+                    Log.e(TAG,"---->char value:"+new String(data));
+                }
+                final int k=j;
+                //UUID_KEY_DATA是可以跟蓝牙模块串口通信的Characteristic
+                if(gattCharacteristics.get(j).getUuid().toString().equals(BlueToothService.UUID_HEART_RATE_MEASUREMENT)){
+                    //测试读取当前Characteristic数据，会触发mOnDataAvailable.onCharacteristicRead()
+                    final int finalJ = j;
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mBlueToothService.readCharacteristic(gattCharacteristics.get(k));
+                        }
+                    }, 500);
+
+                    //接受Characteristic被写的通知,收到蓝牙模块的数据后会触发mOnDataAvailable.onCharacteristicWrite()
+                    mBlueToothService.setCharacteristicNotification( gattCharacteristics.get(j), true);
+                    //设置数据内容
+                    gattCharacteristics.get(j).setValue("send data->");
+                    //往蓝牙模块写入数据
+                    mBlueToothService.wirteCharacteristic( gattCharacteristics.get(j));
+                }
+
+                //-----Descriptors的字段信息-----//
+                List<BluetoothGattDescriptor> gattDescriptors =  gattCharacteristics.get(j).getDescriptors();
+                for (BluetoothGattDescriptor gattDescriptor : gattDescriptors) {
+                    Log.e(TAG, "-------->desc uuid:" + gattDescriptor.getUuid());
+                    int descPermission = gattDescriptor.getPermissions();
+                    Log.e(TAG,"-------->desc permission:"+ Utils.getDescPermission(descPermission));
+
+                    byte[] desData = gattDescriptor.getValue();
+                    if (desData != null && desData.length > 0) {
+                        Log.e(TAG, "-------->desc value:"+ new String(desData));
+                    }
+                }
+
                 chars.add(gattCharacteristics.get(j));
                 Map<String,String>  maps=new HashMap<>();
                 uuid=gattCharacteristics.get(j).getUuid().toString();

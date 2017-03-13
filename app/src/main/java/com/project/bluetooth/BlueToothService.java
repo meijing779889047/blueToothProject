@@ -39,11 +39,11 @@ public class BlueToothService extends Service {
     private static final int    STATE_CONNECTED = 2;
 
    //蓝牙连接状态广播
-    public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
-    public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
+   public final static String ACTION_GATT_CONNECTED           = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
+    public final static String ACTION_GATT_DISCONNECTED        = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
-    public final static String ACTION_DATA_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
-    public final static String EXTRA_DATA = "com.example.bluetooth.le.EXTRA_DATA";
+    public final static String ACTION_DATA_AVAILABLE           = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
+    public final static String EXTRA_DATA                      = "com.example.bluetooth.le.EXTRA_DATA";
 
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID
             .fromString(GattAttributes.HEART_RATE_MEASUREMENT);
@@ -251,8 +251,8 @@ public class BlueToothService extends Service {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
-                Log.i(TAG, "Disconnected from GATT server.");
                 sendBroadCast(intentAction);
+                Log.i(TAG, "Disconnected from GATT server.");
             }
         }
 
@@ -268,11 +268,26 @@ public class BlueToothService extends Service {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
-            System.out.println("onCharacteristicRead");
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 sendBroadCast(ACTION_DATA_AVAILABLE, characteristic);
             }
+            if (status == BluetoothGatt.GATT_SUCCESS)
+                Log.e(TAG,"onCharRead "+gatt.getDevice().getName()
+                        +" read "
+                        +characteristic.getUuid().toString()
+                        +" -> "
+                        +Utils.bytesToHexString(characteristic.getValue()));
         }
+        public void onCharacteristicWrite(BluetoothGatt gatt,
+                                          BluetoothGattCharacteristic characteristic, int status) {
+            Log.e(TAG,"onCharWrite "+gatt.getDevice().getName()
+                    +" write "
+                    +characteristic.getUuid().toString()
+                    +" -> "
+                    +new String(characteristic.getValue()));
+
+        };
+
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt,
@@ -280,6 +295,7 @@ public class BlueToothService extends Service {
 
             System.out.println("onDescriptorWriteonDescriptorWrite = " + status
                     + ", descriptor =" + descriptor.getUuid().toString());
+
         }
 
         @Override
@@ -298,11 +314,7 @@ public class BlueToothService extends Service {
             System.out.println("rssi = " + rssi);
         }
 
-        public void onCharacteristicWrite(BluetoothGatt gatt,
-                                          BluetoothGattCharacteristic characteristic, int status) {
-            System.out.println("--------write success----- status:" + status);
 
-        };
     };
 
     /****发送广播*****************************************************************/
@@ -337,10 +349,8 @@ public class BlueToothService extends Service {
                 for (byte byteChar : data)
                     stringBuilder.append(String.format("%02X ", byteChar));
 
-                System.out.println("ppp" + new String(data) + "\n"
-                        + stringBuilder.toString());
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n"
-                        + stringBuilder.toString());
+                Log.i(TAG,"从ble设备获取到的数据："+ new String(data) + "\n" + stringBuilder.toString());
+                intent.putExtra(EXTRA_DATA, new String(data) + "\n"+ stringBuilder.toString());
             }
         }
         sendBroadcast(intent);

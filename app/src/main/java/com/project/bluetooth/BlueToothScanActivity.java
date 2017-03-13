@@ -23,14 +23,14 @@ import java.util.List;
 /**
  * 蓝牙扫描界面
  */
-public class MainActivity extends AppCompatActivity   implements View.OnClickListener{
+public class BlueToothScanActivity extends AppCompatActivity   implements View.OnClickListener{
 
     private LinearLayout     llBg;
     private ProgressBar      progressBar;
     private Button           btnScan;
     private RecyclerView     mRecyclerView;
 
-    private String TAG="MainActivity";
+    private String TAG="BlueToothScanActivity";
     private BluetoothManager blueToothManager;
     private BluetoothAdapter bluethoothAdapter;
     private Handler          mHandler=new Handler();
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity   implements View.OnClickLis
     private void initData() {
         //1.判断当前设备是否支持ble设备
         if(!getPackageManager().hasSystemFeature(getPackageManager().FEATURE_BLUETOOTH_LE)){
-            Toast.makeText(MainActivity.this,"当前设备不支持ble，即将推出",Toast.LENGTH_SHORT).show();
+            Toast.makeText(BlueToothScanActivity.this,"当前设备不支持ble，即将推出",Toast.LENGTH_SHORT).show();
             finish();
         }
         //2.若支持蓝牙设备，判断设备是否打开，若没有打开，请求打开蓝牙设备
@@ -95,11 +95,11 @@ public class MainActivity extends AppCompatActivity   implements View.OnClickLis
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode==RESULT_OK){
             if(requestCode==10001){
-                Toast.makeText(MainActivity.this,"蓝牙已启用",Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlueToothScanActivity.this,"蓝牙已启用",Toast.LENGTH_SHORT).show();
             }
         }else if(resultCode==RESULT_CANCELED){
             if(requestCode==10001) {
-                Toast.makeText(MainActivity.this, "蓝牙未启用", Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlueToothScanActivity.this, "蓝牙未启用", Toast.LENGTH_SHORT).show();
             }
         }
         Log.i(TAG,"结果码:"+resultCode+"--->请求码："+requestCode);
