@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ExpandableListView;
@@ -290,9 +291,14 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
      * @param intent
      */
     private void displayData(Intent intent) {
-       String data= intent.getExtras().getString(BlueToothService.EXTRA_DATA);
-        Log.i(TAG,"蓝牙设备数据："+data);
-        tvData.setText("数据： "+data);
+        Bundle  bundle=intent.getExtras();
+        if(bundle!=null){
+       String data= bundle.getString(BlueToothService.EXTRA_DATA);
+        if(!TextUtils.isEmpty(data)) {
+            Log.i(TAG, "蓝牙设备数据：" + data);
+            tvData.setText("数据： " + data);
+        }
+        }
     }
 
 
@@ -309,11 +315,13 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
                         .get(groupPosition).get(childPosition);
                 final int charaProp = characteristic.getProperties();
                 Log.i(TAG,"charaProp = " + charaProp + ",UUID = " + characteristic.getUuid().toString());
-                if (characteristic.getUuid().toString().equals("00001543-0000-3512-2118-0009af100700")) {
+//                if(characteristic.getUuid().toString().equals("00002a23-0000-1000-8000-00805f9b34fb")) {
+                //接受Characteristic被写的通知,收到蓝牙模块的数据后会触发mOnDataAvailable.onCharacteristicWrite()
+                   mBlueToothService.setCharacteristicNotification(characteristic, true);
                     characteristic.setValue("m".getBytes());
                     mBlueToothService.wirteCharacteristic(characteristic);
                     Log.i(TAG,"write  data  m");
-                } else {
+//              } else {
                     if ((charaProp & BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
                         //如果有一个活跃的通知上的特点,首先明确所以没有更新的数据字段使用接口
                         // If there is an active notification on a
@@ -326,9 +334,9 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
                             mNotifyCharacteristic = null;
                         }
                         mBlueToothService.readCharacteristic(characteristic);
-
+                        Log.i(TAG,"read data");
                     }
-                }
+//                }
                 if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
 
                     if (characteristic.getUuid().toString().equals("0000fff6-0000-1000-8000-00805f9b34fb")||characteristic.getUuid().toString().equals("0000fff4-0000-1000-8000-00805f9b34fb")) {
@@ -360,7 +368,16 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mBlueToothService.disConnectBlueTooth();
+        mBlueToothService=null;
         unregisterReceiver(receiver);
         unbindService(mConnect);
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }

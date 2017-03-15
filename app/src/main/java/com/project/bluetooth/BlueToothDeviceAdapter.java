@@ -41,7 +41,7 @@ public class BlueToothDeviceAdapter extends RecyclerView.Adapter<RecyclerViewHol
             holder.getTvName().setText("设备："+name);
             //地址
             String  address=result.getAddress();
-            holder.getTvAddress().setText("macd地址："+address);
+            holder.getTvAddress().setText("mac地址："+address);
 
             holder.getLlBg().setOnClickListener(new View.OnClickListener() {
                 @Override

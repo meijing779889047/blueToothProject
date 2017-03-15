@@ -234,6 +234,8 @@ public class BlueToothService extends Service {
 
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+
+        //当连接上设备或者失去连接时会回调该函数
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status,
                                             int newState) {
@@ -256,15 +258,16 @@ public class BlueToothService extends Service {
             }
         }
 
+         //当设备是否找到服务时，会回调该函数
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 sendBroadCast(ACTION_GATT_SERVICES_DISCOVERED);
-            } else {
-                Log.w(TAG, "onServicesDiscovered received: " + status);
             }
-        }
+                Log.w(TAG, "onServicesDiscovered received: " + status);
 
+        }
+        //当向设备读取数据时会回调该函数
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
@@ -278,17 +281,20 @@ public class BlueToothService extends Service {
                         +" -> "
                         +Utils.bytesToHexString(characteristic.getValue()));
         }
+        //当向设备写入数据，返回数据时会回调该函数
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic, int status) {
-            Log.e(TAG,"onCharWrite "+gatt.getDevice().getName()
-                    +" write "
-                    +characteristic.getUuid().toString()
-                    +" -> "
-                    +new String(characteristic.getValue()));
-
+            byte[]  data=characteristic.getValue();
+            if(data!=null&&data.length>0) {
+                Log.e(TAG, "onCharWrite " + gatt.getDevice().getName()
+                        + " write "
+                        + characteristic.getUuid().toString()
+                        + " -> "
+                        + new String(characteristic.getValue()));
+            }
         };
 
-
+        //当向设备Descriptor中写数据时，会回调该函数
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt,
                                       BluetoothGattDescriptor descriptor, int status) {
@@ -298,6 +304,14 @@ public class BlueToothService extends Service {
 
         }
 
+        //当读取设备时会回调该函数
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorRead(gatt, descriptor, status);
+        }
+//当向设备D
+
+        //设备发出通知时会调用到该接口  对中心设备与外围设备的传输数据的处理发生在onCharacteristicChanged()里
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
