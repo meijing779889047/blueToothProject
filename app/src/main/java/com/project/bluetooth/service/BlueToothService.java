@@ -1,4 +1,4 @@
-package com.project.bluetooth;
+package com.project.bluetooth.service;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -17,6 +17,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.project.bluetooth.config.GattAttributes;
+import com.project.bluetooth.config.Utils;
 
 import java.util.List;
 import java.util.UUID;
@@ -49,8 +52,8 @@ public class BlueToothService extends Service {
             .fromString(GattAttributes.HEART_RATE_MEASUREMENT);
 
     private  final Binder   mBinder=new LocalBinder();
-    class   LocalBinder  extends   Binder{
-          BlueToothService getService(){
+    public class   LocalBinder  extends   Binder{
+          public BlueToothService getService(){
              return  BlueToothService.this;
         }
     }
@@ -279,7 +282,7 @@ public class BlueToothService extends Service {
                         +" read "
                         +characteristic.getUuid().toString()
                         +" -> "
-                        +Utils.bytesToHexString(characteristic.getValue()));
+                        + Utils.bytesToHexString(characteristic.getValue()));
         }
         //当向设备写入数据，返回数据时会回调该函数
         public void onCharacteristicWrite(BluetoothGatt gatt,

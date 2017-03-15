@@ -1,4 +1,4 @@
-package com.project.bluetooth;
+package com.project.bluetooth.ui;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -20,13 +20,18 @@ import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
+import com.project.bluetooth.service.BlueToothService;
+import com.project.bluetooth.config.GattAttributes;
+import com.project.bluetooth.R;
+import com.project.bluetooth.config.Utils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.project.bluetooth.Constanct.LIST_NAME;
-import static com.project.bluetooth.Constanct.LIST_UUID;
+import static com.project.bluetooth.config.Constanct.LIST_NAME;
+import static com.project.bluetooth.config.Constanct.LIST_UUID;
 
 
 /**
@@ -187,13 +192,13 @@ public class BlueToothConnectActivity extends AppCompatActivity  implements View
 
             //-----Service的字段信息-----//
             int type = services.get(i).getType();
-            Log.e(TAG,"-->service type:"+Utils.getServiceType(type));
+            Log.e(TAG,"-->service type:"+ Utils.getServiceType(type));
             Log.e(TAG,"-->includedServices size:"+services.get(i).getIncludedServices().size());
             Log.e(TAG,"-->service uuid:"+services.get(i).getUuid());
 
             Map<String,String> map=new HashMap<>();
              uuid=services.get(i).getUuid().toString();
-             map.put(LIST_NAME,GattAttributes.lookup(uuid,unKnownCharacteristic));
+             map.put(LIST_NAME, GattAttributes.lookup(uuid,unKnownCharacteristic));
              map.put(LIST_UUID,uuid);
              gattServiceData.add(map);
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.project.bluetooth;
+package com.project.bluetooth.config;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;

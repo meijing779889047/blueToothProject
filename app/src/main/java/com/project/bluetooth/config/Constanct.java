@@ -1,4 +1,4 @@
-package com.project.bluetooth;
+package com.project.bluetooth.config;
 
 /**
  * Created by meijing on 2017/3/8.

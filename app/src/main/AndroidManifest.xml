@@ -19,16 +19,16 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".BlueToothScanActivity">
+        <activity android:name=".ui.BlueToothScanActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".BlueToothConnectActivity"></activity>
+        <activity android:name=".ui.BlueToothConnectActivity"></activity>
 
-        <service android:name=".BlueToothService"></service>
+        <service android:name=".service.BlueToothService"></service>
     </application>
 
 </manifest>

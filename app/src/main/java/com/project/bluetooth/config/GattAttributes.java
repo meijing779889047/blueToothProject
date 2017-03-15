@@ -1,4 +1,4 @@
-package com.project.bluetooth;
+package com.project.bluetooth.config;
 
 import java.util.HashMap;
 

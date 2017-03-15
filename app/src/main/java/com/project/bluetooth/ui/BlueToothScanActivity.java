@@ -1,4 +1,4 @@
-package com.project.bluetooth;
+package com.project.bluetooth.ui;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -16,6 +16,9 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.project.bluetooth.R;
+import com.project.bluetooth.adapter.BlueToothDeviceAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +39,7 @@ public class BlueToothScanActivity extends AppCompatActivity   implements View.O
     private Handler          mHandler=new Handler();
     private boolean          isScan=false;
     private List<BluetoothDevice> list=new ArrayList<>();
-    private BlueToothDeviceAdapter  mAdapter;
+    private BlueToothDeviceAdapter mAdapter;
     private LinearLayoutManager manager;
 
 

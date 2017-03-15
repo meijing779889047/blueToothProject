@@ -1,9 +1,11 @@
-package com.project.bluetooth;
+package com.project.bluetooth.adapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.project.bluetooth.R;
 
 /**
  * Created by meijing on 2017/3/2.
